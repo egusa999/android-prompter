@@ -1,3 +1,17 @@
+## Usage
+
+1. Open `prompter.html` in Chrome on your tablet → under **① Script**, select a `.md`/`.txt` file (or paste text directly), then set the speed and font size under **② Speed & Appearance**.
+2. Tap **"Start Fullscreen"** → after a 3-second countdown, the script auto-scrolls at a constant speed (px/sec).
+3. When the end of the script is reached, scrolling stops automatically and shows "Reached the end" — it won't scroll past that point.
+
+## During playback
+
+- **Swipe up/down**: manual scroll (release to resume auto-scrolling at the set speed)
+- **Tap**: pause / resume
+- **Top-right controls**: speed ±5, jump to start, exit
+
+You can also set a target **read time (minutes)** and tap **"Fit to this time"** to auto-calculate the scroll speed — the estimated duration updates live. **Mirror mode** (for teleprompter beam-splitter rigs) and a **center guideline** can be toggled from the setup screen. The screen is kept awake during scrolling so it won't dim mid-take.
+
 # プロンプター（PWA）
 
 Androidタブレット向けのプロンプター。`.md` / `.txt` の原稿を全画面で等速スクロール表示します。
