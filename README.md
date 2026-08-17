@@ -21,23 +21,6 @@ Androidタブレット向けのプロンプター。`.md` / `.txt` の原稿を�
 - 上下スワイプで手動スクロール、タップで一時停止／再開
 - 原稿の最後まで到達したら自動停止
 
-## 公開手順（GitHub Pages）
-
-PWAとしてインストールするには **https での公開が必須**です（`file://` で直接開いた場合、インストールはできませんが動作自体はします）。
-
-```bash
-# このフォルダで（git init / 初回コミットは実施済み）
-git remote add origin https://github.com/<ユーザー名>/<リポジトリ名>.git
-git branch -M main
-git push -u origin main
-```
-
-そのあと GitHub のリポジトリで:
-
-1. **Settings** → 左メニュー **Pages**
-2. **Source** を `Deploy from a branch`、**Branch** を `main` / `/ (root)` にして **Save**
-3. 1〜2分で `https://<ユーザー名>.github.io/<リポジトリ名>/` が公開されます
-
 ## タブレットへのインストール
 
 1. Android の Chrome で公開URLを開く
@@ -46,16 +29,6 @@ git push -u origin main
 
 > インストール後もページを開くたびに更新チェックが走ります（ネットワーク優先）。
 > 一度開けば電波がなくても起動できます。
-
-## 更新の反映
-
-`index.html` などを変更して push したあと、確実に反映させたい場合は `sw.js` の
-
-```js
-const CACHE = 'prompter-v1';
-```
-
-の数字を上げてからコミットしてください。古いキャッシュが破棄されます。
 
 ## 操作一覧
 
