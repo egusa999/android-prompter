@@ -1,6 +1,6 @@
 ## Usage
 
-1. Open `prompter.html` in Chrome on your tablet → under **① Script**, select a `.md`/`.txt` file (or paste text directly), then set the speed and font size under **② Speed & Appearance**.
+1. Open `index.html` in Chrome on your tablet → under **① Script**, select a `.md`/`.txt` file (or paste text directly), then set the speed and font size under **② Speed & Appearance**.
 2. Tap **"Start Fullscreen"** → after a 3-second countdown, the script auto-scrolls at a constant speed (px/sec).
 3. When the end of the script is reached, scrolling stops automatically and shows "Reached the end" — it won't scroll past that point.
 
@@ -23,7 +23,7 @@ Androidタブレット向けのプロンプター。`.md` / `.txt` の原稿を�
 
 ## タブレットへのインストール
 
-1. Android の Chrome で公開URLを開く
+1. Android の Chrome で公開URL（`index.html`）を開く
 2. 右上メニュー → **アプリをインストール**（または「ホーム画面に追加」）
 3. ホーム画面のアイコンから起動すると、アドレスバーなしの全画面で開きます
 
@@ -46,7 +46,8 @@ Androidタブレット向けのプロンプター。`.md` / `.txt` の原稿を�
 ## ファイル構成
 
 ```
-index.html               アプリ本体（HTML/CSS/JS すべて内包）
+index.html               アプリ本体（HTML/CSS/JS すべて内包、PWA対応）
+prompter.html             日英自動切替（i18n）版。PWA登録（manifest / Service Worker）は含まない単体HTML
 manifest.webmanifest     PWAマニフェスト（アイコン・全画面表示の設定）
 sw.js                    Service Worker（インストール可能化＋オフライン起動）
 icons/                   アイコン一式（192 / 512 / maskable / apple-touch）
