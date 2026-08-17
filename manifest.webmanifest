@@ -4,7 +4,7 @@
   "description": "mdファイルを全画面で等速スクロール表示するプロンプター。スワイプで手動スクロール、最後まで到達すると自動停止します。",
   "lang": "ja",
   "dir": "ltr",
-  "id": "./android-prompter",
+  "id": "./",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",

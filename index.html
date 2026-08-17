@@ -53,7 +53,7 @@
   .hint{font-size:12px;color:#6b7280;margin-top:8px;line-height:1.6;}
   .presets{display:flex;gap:8px;flex-wrap:wrap;}
   .presets button{padding:8px 14px;font-size:13px;border-radius:999px;background:#20252e;}
-  #measure{position:fixed;left:-99999px;top:0;visibility:hidden;white-space:pre-wrap;
+  #measure{position:fixed;left:-99999px;top:0;visibility:hidden;
     word-break:break-word;overflow-wrap:anywhere;}
 
   /* ===== プロンプター画面 ===== */
@@ -62,8 +62,32 @@
   #view{position:absolute;inset:0;overflow:hidden;}
   #view.mirror{transform:scaleX(-1);}
   #content{position:absolute;left:0;top:0;width:100%;padding:40vh 6vw 60vh;
-    white-space:pre-wrap;word-break:break-word;overflow-wrap:anywhere;
+    word-break:break-word;overflow-wrap:anywhere;
     color:#fff;will-change:transform;}
+
+  /* ===== Markdown整形（#content / #measure 共通） ===== */
+  .md-body h1,.md-body h2,.md-body h3,.md-body h4,.md-body h5,.md-body h6{
+    font-weight:800;margin:1em 0 .5em;line-height:1.3;}
+  .md-body h1:first-child,.md-body h2:first-child,.md-body h3:first-child{margin-top:0;}
+  .md-body h1{font-size:1.6em;}
+  .md-body h2{font-size:1.35em;}
+  .md-body h3{font-size:1.18em;}
+  .md-body h4,.md-body h5,.md-body h6{font-size:1.05em;}
+  .md-body p{margin:0 0 .9em;}
+  .md-body strong{font-weight:800;}
+  .md-body em{font-style:italic;}
+  .md-body del{opacity:.6;}
+  .md-body code{font-family:ui-monospace,Menlo,Consolas,monospace;
+    background:rgba(255,255,255,.14);padding:.05em .35em;border-radius:.3em;font-size:.85em;}
+  .md-body pre{background:rgba(255,255,255,.08);border-radius:.5em;padding:.7em 1em;
+    overflow-wrap:anywhere;white-space:pre-wrap;margin:0 0 .9em;}
+  .md-body pre code{background:none;padding:0;font-size:.75em;}
+  .md-body blockquote{border-left:.28em solid rgba(91,156,255,.75);margin:0 0 .9em;
+    padding:.1em 0 .1em 1em;color:rgba(255,255,255,.75);}
+  .md-body ul,.md-body ol{margin:0 0 .9em;padding-left:1.3em;}
+  .md-body li{margin:0 0 .35em;}
+  .md-body hr{border:none;border-top:.15em solid rgba(255,255,255,.25);margin:1.2em 0;}
+  .md-body a{color:#5b9cff;text-decoration:underline;}
   #guide{position:absolute;left:0;right:0;top:38vh;height:0;border-top:2px solid rgba(91,156,255,.55);
     pointer-events:none;display:none;}
   #guide.on{display:block;}
@@ -107,7 +131,7 @@
     <div style="margin-top:12px">
       <textarea id="text" placeholder="ここに直接貼り付けてもOK（ファイルを選ぶとここに読み込まれます）"></textarea>
     </div>
-    <div class="hint">記号を含めて原稿そのままをプレーンテキストで表示します（Markdownの整形はしません）。</div>
+    <div class="hint"># 見出し・**太字**・*斜体*・&gt; 引用・リスト・`コード`などのMarkdown書式を保持したまま表示します。</div>
   </div>
 
   <div class="card">
@@ -158,7 +182,7 @@
 </div>
 
 <div id="stage">
-  <div id="view"><div id="content"></div></div>
+  <div id="view"><div id="content" class="md-body"></div></div>
   <div id="guide"></div>
   <div id="speedTag"></div>
   <div id="hud">
@@ -172,7 +196,7 @@
   <div id="bar"></div>
 </div>
 
-<div id="measure"></div>
+<div id="measure" class="md-body"></div>
 
 <script>
 (function(){
@@ -191,6 +215,106 @@
     bar:$('#bar'), hud:$('#hud'), state:$('#state'), count:$('#count'), speedTag:$('#speedTag')
   };
 
+  /* ---------- 軽量Markdownレンダラー（見出し/強調/リスト/引用/コード/リンク/罫線） ---------- */
+  function escapeHtml(s){
+    return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  }
+
+  function inlineMd(s){
+    s = s.replace(/`([^`]+)`/g, function(_,c){ return '<code>' + c + '</code>'; });
+    s = s.replace(/\*\*\*([^*]+)\*\*\*/g, '<strong><em>$1</em></strong>');
+    s = s.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
+    s = s.replace(/__([^_]+)__/g, '<strong>$1</strong>');
+    s = s.replace(/(^|[^*])\*([^*\n]+)\*(?!\*)/g, '$1<em>$2</em>');
+    s = s.replace(/(^|[^_])_([^_\n]+)_(?!_)/g, '$1<em>$2</em>');
+    s = s.replace(/~~([^~]+)~~/g, '<del>$1</del>');
+    s = s.replace(/\[([^\]]+)\]\(([^)\s]+)(?:\s+"[^"]*")?\)/g, '<a href="$2" target="_blank" rel="noopener">$1</a>');
+    return s;
+  }
+
+  function mdToHtml(src){
+    src = String(src).replace(/\r\n?/g, '\n');
+    var lines = src.split('\n');
+    var out = [], para = [], listType = null, inQuote = false, quoteBuf = [];
+    var i = 0, n = lines.length;
+
+    function flushPara(){
+      if(para.length){
+        out.push('<p>' + para.map(function(l){ return inlineMd(escapeHtml(l)); }).join('<br>') + '</p>');
+        para = [];
+      }
+    }
+    function closeList(){
+      if(listType){ out.push(listType === 'ol' ? '</ol>' : '</ul>'); listType = null; }
+    }
+    function closeQuote(){
+      if(inQuote){
+        out.push('<blockquote>' + quoteBuf.map(function(l){ return inlineMd(escapeHtml(l)); }).join('<br>') + '</blockquote>');
+        quoteBuf = []; inQuote = false;
+      }
+    }
+
+    while(i < n){
+      var line = lines[i];
+
+      var fence = line.match(/^\s*```/);
+      if(fence){
+        flushPara(); closeList(); closeQuote();
+        var buf = []; i++;
+        while(i < n && !/^\s*```/.test(lines[i])){ buf.push(lines[i]); i++; }
+        i++;
+        out.push('<pre><code>' + escapeHtml(buf.join('\n')) + '</code></pre>');
+        continue;
+      }
+
+      if(/^\s*$/.test(line)){
+        flushPara(); closeList(); closeQuote();
+        i++; continue;
+      }
+
+      var h = line.match(/^(#{1,6})\s+(.*)$/);
+      if(h){
+        flushPara(); closeList(); closeQuote();
+        var lvl = h[1].length;
+        out.push('<h' + lvl + '>' + inlineMd(escapeHtml(h[2].trim())) + '</h' + lvl + '>');
+        i++; continue;
+      }
+
+      if(/^\s*([-*_])\s*(\1\s*){2,}$/.test(line)){
+        flushPara(); closeList(); closeQuote();
+        out.push('<hr>');
+        i++; continue;
+      }
+
+      var q = line.match(/^\s?>\s?(.*)$/);
+      if(q){
+        flushPara(); closeList();
+        inQuote = true;
+        quoteBuf.push(q[1]);
+        i++; continue;
+      } else if(inQuote){
+        closeQuote();
+      }
+
+      var ol = line.match(/^\s*\d+[.)]\s+(.*)$/);
+      var ul = line.match(/^\s*[-*+]\s+(.*)$/);
+      if(ol || ul){
+        flushPara();
+        var type = ol ? 'ol' : 'ul';
+        if(listType !== type){ closeList(); out.push(type === 'ol' ? '<ol>' : '<ul>'); listType = type; }
+        out.push('<li>' + inlineMd(escapeHtml(ol ? ol[1] : ul[1])) + '</li>');
+        i++; continue;
+      } else if(listType){
+        closeList();
+      }
+
+      para.push(line);
+      i++;
+    }
+    flushPara(); closeList(); closeQuote();
+    return out.join('\n');
+  }
+
   /* ---------- 設定画面 ---------- */
   function fontFamily(){ return el.font.value === 'mincho' ? MINCHO : GOTHIC; }
 
@@ -202,7 +326,7 @@
     el.measure.style.fontFamily = fontFamily();
     el.measure.style.fontSize = el.fs.value + 'px';
     el.measure.style.lineHeight = el.lh.value;
-    el.measure.textContent = t;
+    el.measure.innerHTML = mdToHtml(t);
     return el.measure.scrollHeight;
   }
 
@@ -246,12 +370,16 @@
   });
 
   el.sample.addEventListener('click', function(){
-    el.text.value = 'おはようございます。本日はお集まりいただき、ありがとうございます。\n\n'
+    el.text.value = '# 開会のご挨拶\n\n'
+      + 'おはようございます。本日はお集まりいただき、**ありがとうございます**。\n\n'
+      + '## このプロンプターについて\n\n'
       + 'このプロンプターは、原稿を一定の速さで流しながら読み上げるためのものです。\n'
-      + '画面をタップすると一時停止します。もう一度タップすると再開します。\n\n'
-      + '読む位置がずれたときは、上下にスワイプして原稿を動かしてください。\n'
-      + '指を離すと、また同じ速さでスクロールが続きます。\n\n'
-      + '原稿の最後まで到達すると、そこで自動的に停止します。\n\n'
+      + '画面を*タップ*すると一時停止します。もう一度タップすると再開します。\n\n'
+      + '- 上下にスワイプすると手動でスクロールできます\n'
+      + '- 指を離すと、また同じ速さでスクロールが続きます\n'
+      + '- `Markdown` の書式もそのまま表示されます\n\n'
+      + '> 原稿の最後まで到達すると、そこで自動的に停止します。\n\n'
+      + '---\n\n'
       + 'それでは、本番の原稿を読み込んでお使いください。';
     el.fileName.textContent = 'サンプル原稿';
     updateEst();
@@ -359,7 +487,7 @@
   function startPrompter(){
     var t = el.text.value;
     if(!t.trim()){ return; }
-    el.content.textContent = t;
+    el.content.innerHTML = mdToHtml(t);
     el.content.style.fontFamily = fontFamily();
     el.content.style.fontSize = el.fs.value + 'px';
     el.content.style.lineHeight = el.lh.value;

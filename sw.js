@@ -1,7 +1,7 @@
 /* プロンプター PWA — 最小構成の Service Worker
    目的: インストール可能にすること（+ おまけでオフライン起動）
    ファイルを更新したら CACHE の数字を上げてください。 */
-const CACHE = 'prompter-v1';
+const CACHE = 'prompter-v3';
 const ASSETS = [
   './',
   './index.html',
